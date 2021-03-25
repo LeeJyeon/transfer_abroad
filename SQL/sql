@@ -1,0 +1,260 @@
+;
+create table base_code_master /* 기준 코드값 정보관리를 위한 테이블 */(
+    code_group_id varchar(20),
+    base_code_value varchar(20),
+    regi_id varchar(20),
+    regi_date datetime default current_timestamp,
+    regi_ip varchar(40),
+    modi_id varchar(20),
+    modi_date datetime default current_timestamp,
+    modi_ip varchar(40),
+    code_name varchar(100),
+
+    primary key(code_group_id , base_code_value)
+);
+create table account_master /* 계좌정보 관리를 위한 테이블 */(
+    acct_no varchar(13),
+    regi_id varchar(20),
+    regi_date datetime default current_timestamp,
+    regi_ip varchar(40),
+    modi_id varchar(20),
+    modi_date datetime default current_timestamp,
+    modi_ip varchar(40),
+    password varchar(4),
+    acct_nm varchar(20),
+    acct_mang_base_code varchar(2),
+    living_yn varchar(1),
+    stay_yn varchar(1),
+    tell_no varchar(11),
+    connect_foreign_bank_code varchar(30),
+    connect_foreign_bank_acct_no varchar(30),
+
+    primary key( acct_no )
+);
+create table account_amount_master /* 계좌잔액 관리를 위한 테이블 */(
+    acct_no varchar(13),
+    regi_date datetime default current_timestamp,
+    regi_ip varchar(40),
+    modi_id varchar(20),
+    modi_date datetime default current_timestamp,
+    modi_ip varchar(40),
+    cash_amt double null default 0,
+
+    primary key(acct_no),
+    foreign key(acct_no) references account_master(acct_no)
+)
+;
+create table exchange_rate_tran /*환율정보 내역을 위한 테이블 */(
+    proc_ymd varchar(8),
+    proc_seq int not null auto_increment,
+    curr_code varchar(3),
+    regi_id varchar(20),
+    regi_date datetime default current_timestamp,
+    regi_ip varchar(40),
+    modi_id varchar(20),
+    modi_date datetime default current_timestamp,
+    modi_ip varchar(40),
+    buy_rate int,
+    sell_rate int,
+    base_rate int,
+
+    primary key(proc_seq,proc_ymd,curr_code)
+)
+;
+
+
+create table bsns_rmrk_master /* 적요코드 관리 테이블 */(
+    bsns_rmrk_code varchar(3),
+
+    regi_id varchar(20),
+    regi_date datetime default current_timestamp,
+    regi_ip varchar(40),
+    modi_id varchar(20),
+    modi_date datetime default current_timestamp,
+    modi_ip varchar(40),
+    bsns_rmrk_nm varchar(20),
+
+    primary key(bsns_rmrk_code)
+
+);
+
+create table natn_master /* 국가,주 관리 테이블 */(
+    natn_code varchar(3),
+    state_code varchar(20),
+
+    regi_id varchar(20),
+    regi_date datetime default current_timestamp,
+    regi_ip varchar(40),
+    modi_id varchar(20),
+    modi_date datetime default current_timestamp,
+    modi_ip varchar(40),
+
+    natn_name varchar(20),
+    state_nm varchar(20),
+
+    primary key(natn_code , state_code)
+)
+;
+
+;
+
+create table main_transaction_tran /* 종합거래 내역 테이블 */(
+    deal_ymd varchar(8),
+    acct_no varchar(13),
+    deal_no int not null auto_increment,
+
+
+    regi_id varchar(20),
+    regi_date datetime default current_timestamp,
+    regi_ip varchar(40),
+    modi_id varchar(20),
+    modi_date datetime default current_timestamp,
+    modi_ip varchar(40),
+
+    cash_amt double,
+    cmsn_amt double,
+    exct_amt double,
+    curr_code varchar(3),
+
+    bsns_rmrk_code varchar(3),
+    trns_bank_code varchar(30),
+    trns_bank_acct_no varchar(30),
+    trns_acct_nm varchar(30),
+
+    primary key(deal_no,deal_ymd,acct_no),
+    foreign key(acct_no) references account_master(acct_no),
+    foreign key(bsns_rmrk_code) references bsns_rmrk_master(bsns_rmrk_code) on update cascade
+
+)
+;
+create table foreign_transaction_tran /*해외송금 부가 원장 내역 테이블*/(
+    deal_ymd varchar(8),
+    acct_no varchar(13),
+    deal_no int not null auto_increment,
+
+    regi_id varchar(20),
+    regi_date datetime default current_timestamp,
+    regi_ip varchar(40),
+	modi_id varchar(20),
+    modi_date datetime default current_timestamp,
+    modi_ip varchar(40),
+
+    trns_base_code varchar(2),
+    send_nm varchar(100),
+    recv_nm varchar(100),
+    recv_address varchar(300),
+    recv_city varchar(100),
+    recv_natn_code varchar(3),
+    recv_state_code varchar(2),
+
+    primary key(deal_no,deal_ymd ,acct_no),
+    foreign key(deal_no , deal_ymd, acct_no) references main_transaction_tran(deal_no , deal_ymd, acct_no) ,
+    foreign key(recv_natn_code,recv_state_code) references natn_master(natn_code, state_code)
+)
+;
+
+create table sms_tran /* sms발송 내역 테이블 */(
+    proc_ymd varchar(8),
+    acct_no varchar(13),
+    proc_seq int not null auto_increment,
+
+    tell_no varchar(11),
+    msg_cntt varchar(1000),
+
+    primary key(proc_seq,proc_ymd, acct_no),
+    foreign key(acct_no) references account_master(acct_no)
+)
+;
+
+create table send_fep_tran /* fep발송 내역 테이블 */(
+    proc_ymd varchar(8),
+    proc_seq int not null auto_increment,
+
+    trns_base_code varchar(2),
+    fep_com_cntt varchar(1000),
+
+    primary key(proc_seq,proc_ymd)
+)
+;
+
+create table deal_limit_master /* 이체 한도 테이블 */(
+    trns_base_code varchar(2),
+    curr_code varchar(3),
+    excpt_yn varchar(1),
+
+    regi_id varchar(20),
+    regi_date datetime default current_timestamp,
+    regi_ip varchar(40),
+    modi_id varchar(20),
+    modi_date datetime default current_timestamp,
+    modi_ip varchar(40),
+
+    trns_lim_amt double,
+
+    primary key( trns_base_code , curr_code , excpt_yn )
+)
+;
+
+
+create table deal_limit_hist_tran /* 이체 한도 내역 테이블 */(
+    proc_ymd varchar(8),
+    proc_seq int not null auto_increment,
+    trns_base_code varchar(2),
+    curr_code varchar(3),
+    excpt_yn varchar(1),
+
+    regi_id varchar(20),
+    regi_date datetime default current_timestamp,
+    regi_ip varchar(40),
+	modi_id varchar(20),
+    modi_date datetime default current_timestamp,
+    modi_ip varchar(40),
+
+    trns_lim_amt double,
+
+
+    primary key( proc_seq, proc_ymd  , trns_base_code , curr_code ,excpt_yn),
+    foreign key( trns_base_code , curr_code ,excpt_yn) references deal_limit_master(trns_base_code, curr_code ,excpt_yn)
+)
+;
+
+create table deal_fee_master /*수수료 관리 테이블*/(
+    trns_base_code varchar(2),
+    section_base_amt int,
+
+    regi_id varchar(20),
+    regi_date datetime default current_timestamp,
+    regi_ip varchar(40),
+    modi_id varchar(20),
+    modi_date datetime default current_timestamp,
+    modi_ip varchar(40),
+
+    curr_code varchar(3),
+    fee_amt int,
+
+    primary key(trns_base_code, section_base_amt)
+);
+
+create table deal_fee_hist_tran /*수수료 관리 내역 테이블*/(
+    proc_ymd varchar(8),
+    proc_seq int not null auto_increment,
+    trns_base_code varchar(2),
+    section_base_amt int,
+
+
+    regi_id varchar(20),
+    regi_date datetime default current_timestamp,
+    regi_ip varchar(40),
+	modi_id varchar(20),
+    modi_date datetime default current_timestamp,
+    modi_ip varchar(40),
+
+    curr_code varchar(3),
+    fee_amt int,
+
+    primary key(proc_seq,proc_ymd,trns_base_code, section_base_amt),
+    foreign key (trns_base_code, section_base_amt) references deal_fee_master(trns_base_code, section_base_amt)
+)
+;
+
+
